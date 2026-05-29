@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="position: relative; ">
+    <div class="alert hide" style="position: absolute; left: 50%;top: 50%; transform: translate(-50%,-50%); width: 50%;display: flex; justify-content: center;align-items: center;z-index: 3;background-color: white;border-radius: 25px; height: 25%;">
+        <p style="font-size: 35px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 1.5px;">there is no item</p>
+        <button class="close-alert" style="position: absolute;top: -7px;right: -7px; width: 30px; height: 30px; border-radius: 100%; background-color: red; color: white;">X</button>
+    </div>
+    <section class="price-check ">  
+        <div class="container">
+            <p class="product-name"> product name:</p>
+            <p class="product-price">product price:</p>
+            <p class="product-code">product code:</p>
+        </div>
+        <div class="input-field">
+            <input type="text" placeholder="write product code">
+            <div class="numbers-field">
+                <button>1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>4</button>
+                <button>5</button>
+                <button>6</button>
+                <button>7</button>
+                <button>8</button>
+                <button>9</button>
+                <button>0</button>
+
+            </div>
+            <div class="control-numbers">
+                <button class="add-product">>=|</button>
+                <button class="clear-input">C</button>
+                <button class="delete-part-of-input">X</button> 
+            </div>
+        </div>
+        <button class="add-item" style="position: absolute;">add Item</button>
+    </section>
+    <section class="table-section hide" >
+        <table style="width: 95%; ">
+            <thead>
+            <th>item name</th>
+            <th>item price</th>
+            <th>item Quantity</th>
+            <th>item code</th>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+        <button class="return-to-price-check" onclick="returnBack()">return to price check</button>
+    </section>
+    <script src="script.js"></script>
+</body>
+</html>
