@@ -77,11 +77,12 @@ td{
     border: 2px solid black;
 
 }
+    .add-item{
+        bottom: 5px;
+    }
 @media (max-width:767px) {
     .price-check {
         flex-direction: column;
     }
-    .add-item{
-        bottom: 5px;
-    }
+
 }
