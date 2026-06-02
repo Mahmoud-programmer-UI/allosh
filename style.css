@@ -84,5 +84,8 @@ td{
     .price-check {
         flex-direction: column;
     }
+    body{
+        background-color: red;
+    }
 
 }
