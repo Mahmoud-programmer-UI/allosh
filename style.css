@@ -10,9 +10,16 @@
     justify-content: space-evenly;
     background-color: rgb(228, 226, 223);
     padding: 2%;
-    background-image: url(6eaa5ec6-4ae0-40bf-9f57-a04827273b2f.jpg);
-    background-repeat:no-repeat;
     position: relative;
+}
+.allosh-img{
+    position: absolute;
+    top:0px;
+    margin-top: 10px;
+}
+.allosh-img img{
+    width: 250px;
+    object-fit: cover;
 }
 .add-item{
     position: absolute;
@@ -69,4 +76,12 @@ td{
     text-align: center;
     border: 2px solid black;
 
+}
+@media (max-width:767px) {
+    .price-check {
+        flex-direction: column;
+    }
+    .add-item{
+        bottom: 5px;
+    }
 }
