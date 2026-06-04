@@ -15,7 +15,18 @@
 
 
         <div class="input-field" style="margin-top: 50px;">
-            <input type="text" placeholder="write product code">
+            <div>
+                <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                    <input type="text" id="product-code-input" placeholder="write product code">
+                    <button id="scan-btn" style="padding: 5px 10px; cursor: pointer;">📷 Scan</button>
+                </div>
+
+                <!-- A hidden camera container that pops up when they click Scan -->
+                <div id="scanner-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #000; padding: 20px; z-index: 1000;">
+                    <div id="scanner-view" style="width: 300px; height: 200px;"></div>
+                    <button id="close-scanner-btn" style="margin-top: 10px; width: 100%;">Cancel</button>
+                </div>
+            </div>
             <div class="numbers-field">
                 <button>1</button>
                 <button>2</button>

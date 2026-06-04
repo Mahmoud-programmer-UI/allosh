@@ -15,6 +15,61 @@ let buttonsNumbers = document.querySelectorAll(".numbers-field button")
 let closeAlert = document.querySelector(".close-alert")
 let bodyAlert = document.querySelector(".alert")
 
+function scannerWork(){
+        // Make sure to include the library in your head: <script src="https://unpkg.com/html5-qrcode"></script>
+
+    const scanBtn = document.getElementById('scan-btn');
+    const closeScannerBtn = document.getElementById('close-scanner-btn');
+    const scannerModal = document.getElementById('scanner-modal');
+    const productInput = document.getElementById('product-code-input'); // Your input box
+
+    let html5Qrcode; // Will hold our scanner instance
+
+    // Open Scanner
+    scanBtn.addEventListener('click', () => {
+        scannerModal.style.display = 'block';
+        
+        // Initialize scanner inside the 'scanner-view' div
+        html5Qrcode = new Html5Qrcode("scanner-view");
+        
+        const config = { fps: 15, qrbox: { width: 250, height: 120 } }; // Rectangle optimized for barcodes
+        
+        html5Qrcode.start(
+            { facingMode: "environment" }, // Uses rear camera on phones
+            config,
+            (decodedText) => {
+                // SUCCESS: This is exactly what you wanted!
+                // Put the value right into your input field variable
+                productInput.value = decodedText;
+                
+                // --- CRITICAL STEP ---
+                // Trigger your existing price-check function here automatically 
+                // e.g., yourExistingLookupFunction(decodedText);
+                
+                // Stop camera and hide modal
+                stopScanner();
+            },
+            (errorMessage) => {
+                // Parsing... scanning frame by frame
+            }
+        ).catch(err => console.error("Camera access failed", err));
+    });
+
+    // Close Scanner Function
+    function stopScanner() {
+        if (html5Qrcode) {
+            html5Qrcode.stop().then(() => {
+                scannerModal.style.display = 'none';
+            }).catch(err => console.error(err));
+        } else {
+            scannerModal.style.display = 'none';
+        }
+    }
+
+    closeScannerBtn.addEventListener('click', stopScanner);
+}
+scannerWork()
+
 // تشغيل أزرار الأرقام
 buttonsNumbers.forEach((e) => {
     e.onclick = () => {
