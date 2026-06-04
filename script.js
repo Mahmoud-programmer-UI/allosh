@@ -14,62 +14,103 @@ let deletePartOfInput = document.querySelector(".delete-part-of-input")
 let buttonsNumbers = document.querySelectorAll(".numbers-field button") 
 let closeAlert = document.querySelector(".close-alert")
 let bodyAlert = document.querySelector(".alert")
-
 function scannerWork(){
-        // Make sure to include the library in your head: <script src="https://unpkg.com/html5-qrcode"></script>
+    // 1. Declare the scanner variable globally so all functions can access it
+let html5QrcodeInstance = null;
 
+// 2. Define the Stop Scanner function globally
+function stopScanner() {
+    if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
+        html5QrcodeInstance.stop().then(() => {
+            console.log("Camera stopped successfully.");
+            // Hide your container modal here if necessary
+            // document.getElementById('scanner-modal').style.display = 'none';
+        }).catch(err => {
+            console.error("Error stopping the camera: ", err);
+        });
+    }
+}
+
+// 3. Main function to initialize all event listeners
+function initializeScannerApp() {
     const scanBtn = document.getElementById('scan-btn');
-    const closeScannerBtn = document.getElementById('close-scanner-btn');
-    const scannerModal = document.getElementById('scanner-modal');
-    const productInput = document.getElementById('product-code-input'); // Your input box
+    const cancelBtn = document.getElementById('cancel-btn');
+    const scannerView = document.getElementById('scanner-view');
 
-    let html5Qrcode; // Will hold our scanner instance
-
-    // Open Scanner
-    scanBtn.addEventListener('click', () => {
-        scannerModal.style.display = 'block';
-        
-        // Initialize scanner inside the 'scanner-view' div
-        html5Qrcode = new Html5Qrcode("scanner-view");
-        
-        const config = { fps: 15, qrbox: { width: 250, height: 120 } }; // Rectangle optimized for barcodes
-        
-        html5Qrcode.start(
-            { facingMode: "environment" }, // Uses rear camera on phones
-            config,
-            (decodedText) => {
-                // SUCCESS: This is exactly what you wanted!
-                // Put the value right into your input field variable
-                productInput.value = decodedText;
-                
-                // --- CRITICAL STEP ---
-                // Trigger your existing price-check function here automatically 
-                // e.g., yourExistingLookupFunction(decodedText);
-                
-                // Stop camera and hide modal
-                stopScanner();
-            },
-            (errorMessage) => {
-                // Parsing... scanning frame by frame
-            }
-        ).catch(err => console.error("Camera access failed", err));
-    });
-
-    // Close Scanner Function
-    function stopScanner() {
-        if (html5Qrcode) {
-            html5Qrcode.stop().then(() => {
-                scannerModal.style.display = 'none';
-            }).catch(err => console.error(err));
-        } else {
-            scannerModal.style.display = 'none';
-        }
+    // Safety checks: Make sure the HTML elements actually exist on the page first
+    if (!scanBtn || !scannerView) {
+        console.error("Scanner elements missing in HTML. Ensure IDs 'scan-btn' and 'scanner-view' exist.");
+        return;
     }
 
-    closeScannerBtn.addEventListener('click', stopScanner);
+    // Attach the cancel button event listener securely
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', stopScanner);
+    }
+
+    // Attach the main scan button event listener
+    scanBtn.addEventListener('click', () => {
+        // Prevent duplicate instances if clicked multiple times
+        if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
+            console.warn("Scanner is already running.");
+            return;
+        }
+
+        // Initialize the library instance on your element ID
+        html5QrcodeInstance = new Html5Qrcode("scanner-view");
+
+        // Configuration optimized for long linear product barcodes
+        const config = { 
+            fps: 15, 
+            qrbox: { width: 280, height: 150 } 
+        };
+
+        // Success callback helper to avoid code duplication inside fallbacks
+        const handleSuccess = (decodedText) => {
+            console.log("Scanned Code: ", decodedText);
+            
+            // Find your existing text input field
+            const inputField = document.querySelector('input[placeholder="write product code"]');
+            if (inputField) {
+                inputField.value = decodedText;
+                
+                // Crucial for frameworks: fire input event so your search code registers the change
+                inputField.dispatchEvent(new Event('input', { bubbles: true }));
+                inputField.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                console.error("Product code input field not found!");
+            }
+            
+            stopScanner();
+        };
+
+        // Start scanning: Try back camera first (environment)
+        html5QrcodeInstance.start(
+            { facingMode: "environment" }, 
+            config,
+            handleSuccess,
+            (errorMessage) => { /* Scanning frame-by-frame... */ }
+        ).catch(err => {
+            // Fallback: Try desktop webcam/front camera if back camera fails
+            console.warn("Environment camera failed, trying fallback webcam...", err);
+            
+            html5QrcodeInstance.start(
+                { facingMode: "user" }, 
+                config,
+                handleSuccess,
+                (err2) => {}
+            ).catch(finalErr => {
+                alert("Camera access denied or unavailable. Please check your browser/site permissions.");
+                console.error("Camera failed entirely: ", finalErr);
+            });
+        });
+    });
+}
+
+// 4. Run the initialization script
+initializeScannerApp();
 }
 scannerWork()
-
 // تشغيل أزرار الأرقام
 buttonsNumbers.forEach((e) => {
     e.onclick = () => {
