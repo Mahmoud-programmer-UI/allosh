@@ -6,7 +6,7 @@
 .price-check{
     display: flex;
     align-items: center;
-    height: 100vh;
+    height: 100%;
     justify-content: space-evenly;
     background-color: rgb(228, 226, 223);
     padding: 2%;
@@ -77,15 +77,6 @@ td{
     border: 2px solid black;
 
 }
-    .add-item{
-        bottom: 5px;
-    }
-@media (max-width:767px) {
-    .price-check {
-        flex-direction: column;
-    }
-    body{
-        background-color: red;
-    }
-
+.add-item{
+    bottom: 5px;
 }
