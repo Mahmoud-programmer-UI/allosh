@@ -15,100 +15,107 @@ let buttonsNumbers = document.querySelectorAll(".numbers-field button")
 let closeAlert = document.querySelector(".close-alert")
 let bodyAlert = document.querySelector(".alert")
 function scannerWork(){
-    // 1. Declare the scanner variable globally so all functions can access it
+// ============================================================================
+// 1. GLOBAL SCOPE DECLARATIONS
+// ============================================================================
 let html5QrcodeInstance = null;
 
-// 2. Define the Stop Scanner function globally
+document.addEventListener("DOMContentLoaded", () => {
+    initializeScannerApp();
+});
+
+// ============================================================================
+// 2. SAFE STOP SCANNER FUNCTION
+// ============================================================================
 function stopScanner() {
     if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
         html5QrcodeInstance.stop().then(() => {
-            console.log("Camera stopped successfully.");
-            // Hide your container modal here if necessary
-            // document.getElementById('scanner-modal').style.display = 'none';
+            console.log("Camera engine safely stopped.");
         }).catch(err => {
-            console.error("Error stopping the camera: ", err);
+            console.error("Failed to turn off camera stream: ", err);
         });
     }
 }
 
-// 3. Main function to initialize all event listeners
+// ============================================================================
+// 3. MAIN SCANNER CORE MODULE
+// ============================================================================
 function initializeScannerApp() {
     const scanBtn = document.getElementById('scan-btn');
     const cancelBtn = document.getElementById('cancel-btn');
     const scannerView = document.getElementById('scanner-view');
 
-    // Safety checks: Make sure the HTML elements actually exist on the page first
     if (!scanBtn || !scannerView) {
-        console.error("Scanner elements missing in HTML. Ensure IDs 'scan-btn' and 'scanner-view' exist.");
+        console.error("Missing elements. Ensure 'scan-btn' and 'scanner-view' exist in HTML.");
         return;
     }
 
-    // Attach the cancel button event listener securely
     if (cancelBtn) {
         cancelBtn.addEventListener('click', stopScanner);
     }
 
-    // Attach the main scan button event listener
     scanBtn.addEventListener('click', () => {
-        // Prevent duplicate instances if clicked multiple times
+        // Prevent duplicate initializations
         if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
             console.warn("Scanner is already running.");
             return;
         }
 
-        // Initialize the library instance on your element ID
         html5QrcodeInstance = new Html5Qrcode("scanner-view");
 
-        // Configuration optimized for long linear product barcodes
+        // CLEAN CONFIGURATION (Passing video constraints safely right here)
         const config = { 
-            fps: 15, 
-            qrbox: { width: 280, height: 150 } 
+            fps: 20, 
+            qrbox: { width: 320, height: 145 },
+            videoConstraints: {
+                facingMode: "environment",
+                focusMode: "continuous" // Direct, built-in camera autofocus option
+            },
+            formatsToSupport: [ 
+                Html5QrcodeSupportedFormats.EAN_13, 
+                Html5QrcodeSupportedFormats.UPC_A,   
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128
+            ]
         };
 
-        // Success callback helper to avoid code duplication inside fallbacks
         const handleSuccess = (decodedText) => {
-            console.log("Scanned Code: ", decodedText);
+            console.log("Barcode Recognized: ", decodedText);
             
-            // Find your existing text input field
             const inputField = document.querySelector('input[placeholder="write product code"]');
             if (inputField) {
                 inputField.value = decodedText;
                 
-                // Crucial for frameworks: fire input event so your search code registers the change
+                // Fire standard events so your price matching script picks it up instantly
                 inputField.dispatchEvent(new Event('input', { bubbles: true }));
                 inputField.dispatchEvent(new Event('change', { bubbles: true }));
-            } else {
-                console.error("Product code input field not found!");
             }
             
             stopScanner();
         };
 
-        // Start scanning: Try back camera first (environment)
+        // Start scanning using the unified config object
         html5QrcodeInstance.start(
             { facingMode: "environment" }, 
             config,
             handleSuccess,
-            (errorMessage) => { /* Scanning frame-by-frame... */ }
+            (errorMessage) => { /* Scanning... */ }
         ).catch(err => {
-            // Fallback: Try desktop webcam/front camera if back camera fails
-            console.warn("Environment camera failed, trying fallback webcam...", err);
+            console.warn("Environment camera failed. Testing fallback mode...", err);
             
+            // Re-attempt using laptop webcam safely without forcing a dirty clear
             html5QrcodeInstance.start(
                 { facingMode: "user" }, 
                 config,
                 handleSuccess,
                 (err2) => {}
             ).catch(finalErr => {
-                alert("Camera access denied or unavailable. Please check your browser/site permissions.");
-                console.error("Camera failed entirely: ", finalErr);
+                alert("Camera Initialization Failed. Please ensure site permissions are granted.");
+                console.error("Hardware streaming crash log: ", finalErr);
             });
         });
     });
 }
-
-// 4. Run the initialization script
-initializeScannerApp();
 }
 scannerWork()
 // تشغيل أزرار الأرقام
