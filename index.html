@@ -21,15 +21,19 @@
                     <button id="scan-btn" style="padding: 5px 10px; cursor: pointer;">📷 Scan</button>
                 </div>
 
-                <div id="scanner-wrapper" style="position: relative; margin: 15px auto; width: 250px; height: 200px; background: #000; border: 2px solid #333; border-radius: 8px; overflow: hidden; box-sizing: border-box;">
+                <div id="scanner-wrapper" style="display: block; position: relative; margin: 15px auto; width: 250px; height: 200px; background: #000; border: 2px solid #333; border-radius: 8px; overflow: hidden; box-sizing: border-box;">
                     
                     <div id="scanner-view" style="width: 100%; height: 100%;"></div>
                     
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 4px dashed #00ff66; border-radius: 6px; box-sizing: border-box; pointer-events: none; z-index: 5;">
-                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.1); z-index: -1;"></div>
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; z-index: 10;">
                         
-                        <span style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); color: #00ff66; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; white-space: nowrap; text-shadow: 2px 2px 4px #000; background: rgba(0,0,0,0.6); padding: 3px 8px; border-radius: 4px;">
-                            Put Barcode Inside Box
+                        <div style="width: 85%; height: 100px; border: 3px dashed #00ff66; border-radius: 6px; position: relative; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);">
+                            
+                            <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background-color: rgba(255, 0, 0, 0.7); box-shadow: 0 0 8px #ff0000;"></div>
+                        </div>
+
+                        <span style="margin-top: 10px; color: #00ff66; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; white-space: nowrap; text-shadow: 2px 2px 4px #000; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px;">
+                            Align Barcode Within Border
                         </span>
                     </div>
                 </div>
