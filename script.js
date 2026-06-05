@@ -14,108 +14,114 @@ let deletePartOfInput = document.querySelector(".delete-part-of-input")
 let buttonsNumbers = document.querySelectorAll(".numbers-field button") 
 let closeAlert = document.querySelector(".close-alert")
 let bodyAlert = document.querySelector(".alert")
+
+
 function scannerWork(){
-// ============================================================================
-// 1. GLOBAL SCOPE DECLARATIONS
-// ============================================================================
+// Global instance tracker
 let html5QrcodeInstance = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-    initializeScannerApp();
-});
-
-// ============================================================================
-// 2. SAFE STOP SCANNER FUNCTION
-// ============================================================================
+// Safe stop function
 function stopScanner() {
     if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
         html5QrcodeInstance.stop().then(() => {
-            console.log("Camera engine safely stopped.");
-        }).catch(err => {
-            console.error("Failed to turn off camera stream: ", err);
-        });
+            console.log("Camera successfully stopped.");
+            document.getElementById('scanner-wrapper').style.display = 'none';
+        }).catch(err => console.error("Error stopping camera: ", err));
     }
 }
 
-// ============================================================================
-// 3. MAIN SCANNER CORE MODULE
-// ============================================================================
-function initializeScannerApp() {
-    const scanBtn = document.getElementById('scan-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-    const scannerView = document.getElementById('scanner-view');
-
-    if (!scanBtn || !scannerView) {
-        console.error("Missing elements. Ensure 'scan-btn' and 'scanner-view' exist in HTML.");
+// Main Scanner Logic
+function startBarcodeScanner() {
+    // 1. CONNECTION VERIFICATION CHECK
+    // If the library script link above failed, this safe-check catches it instantly
+    if (typeof Html5Qrcode === "undefined") {
+        console.error("Connection Error: The Html5Qrcode library is not ready yet!");
+        alert("Scanner library connection failed. Please refresh the page or check your internet connection.");
         return;
     }
 
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', stopScanner);
-    }
+    console.log("Connection Verified! Securely linking custom script to the library.");
+
+    const scanBtn = document.getElementById('scan-btn');
+    const scannerWrapper = document.getElementById('scanner-wrapper');
+
+    if (!scanBtn) return;
 
     scanBtn.addEventListener('click', () => {
-        // Prevent duplicate initializations
+        // Prevent launching duplicate background camera loops
         if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
-            console.warn("Scanner is already running.");
+            console.warn("Scanner is already actively running.");
             return;
         }
 
+        // Show your layout container framework dynamically
+        if (scannerWrapper) scannerWrapper.style.display = 'block';
+
+        // Connect the instance directly to your HTML target view element ID
         html5QrcodeInstance = new Html5Qrcode("scanner-view");
 
-        // CLEAN CONFIGURATION (Passing video constraints safely right here)
+        // Optimized rectangular configuration for retail codes
         const config = { 
             fps: 20, 
-            qrbox: { width: 320, height: 145 },
-            videoConstraints: {
-                facingMode: "environment",
-                focusMode: "continuous" // Direct, built-in camera autofocus option
-            },
+            qrbox: { width: 300, height: 140 },
             formatsToSupport: [ 
                 Html5QrcodeSupportedFormats.EAN_13, 
-                Html5QrcodeSupportedFormats.UPC_A,   
-                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
                 Html5QrcodeSupportedFormats.CODE_128
             ]
         };
 
-        const handleSuccess = (decodedText) => {
-            console.log("Barcode Recognized: ", decodedText);
-            
-            const inputField = document.querySelector('input[placeholder="write product code"]');
-            if (inputField) {
-                inputField.value = decodedText;
-                
-                // Fire standard events so your price matching script picks it up instantly
-                inputField.dispatchEvent(new Event('input', { bubbles: true }));
-                inputField.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-            
-            stopScanner();
-        };
-
-        // Start scanning using the unified config object
+        // Fire the live streaming video feed
         html5QrcodeInstance.start(
-            { facingMode: "environment" }, 
+            { facingMode: "environment" }, // Request mobile rear camera lens array
             config,
-            handleSuccess,
-            (errorMessage) => { /* Scanning... */ }
+            (decodedText) => {
+                // Success: Code recognized inside the container frame!
+                console.log("Scanned Item Code: ", decodedText);
+                
+                const inputField = document.querySelector('input[placeholder="write product code"]');
+                if (inputField) {
+                    inputField.value = decodedText;
+                    // Trigger events so Allosh price data updates instantly
+                    inputField.dispatchEvent(new Event('input', { bubbles: true }));
+                    inputField.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                stopScanner();
+            },
+            (errorMessage) => { /* Scanning continuous image frames... */ }
         ).catch(err => {
-            console.warn("Environment camera failed. Testing fallback mode...", err);
+            console.warn("Rear camera failed, trying front/default webcam fallback...", err);
             
-            // Re-attempt using laptop webcam safely without forcing a dirty clear
+            // Safe fallback attempt for laptop browser testing environments
             html5QrcodeInstance.start(
                 { facingMode: "user" }, 
                 config,
-                handleSuccess,
+                (decodedText) => {
+                    const inputField = document.querySelector('input[placeholder="write product code"]');
+                    if (inputField) {
+                        inputField.value = decodedText;
+                        inputField.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    stopScanner();
+                },
                 (err2) => {}
             ).catch(finalErr => {
-                alert("Camera Initialization Failed. Please ensure site permissions are granted.");
-                console.error("Hardware streaming crash log: ", finalErr);
+                console.error("Camera connection completely blocked: ", finalErr);
             });
         });
     });
+
+    // Attach stop handler to cancel button safely
+    const cancelBtn = document.getElementById('cancel-btn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', stopScanner);
+    }
 }
+
+// Run the script securely after the browser DOM structure renders completely
+document.addEventListener("DOMContentLoaded", () => {
+    startBarcodeScanner();
+});
 }
 scannerWork()
 // تشغيل أزرار الأرقام
