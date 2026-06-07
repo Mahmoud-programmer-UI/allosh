@@ -3,6 +3,9 @@
     margin: 0;
     box-sizing: border-box;
 }
+body{
+    font-family: Arial, Helvetica, sans-serif !important;
+}
 .price-check{
     display: flex;
     align-items: center;
@@ -107,7 +110,7 @@ td button{
     background-color: #eee;
     font-size: larger;
     text-transform: capitalize;
-    min-width: 200px;
+    width: 200px;
     border-radius: 5px;
     justify-content: space-between;
 }
@@ -118,3 +121,14 @@ button{
     background-color: #cbc8c8;
 }
 
+@media (max-width:767px) {
+    .table-footer button{
+        font-size: large !important;
+        width: 120px !important;
+        line-height: 1.6;     
+    }
+    .total,
+    .total span{
+        font-size: x-large !important;
+    }
+}
