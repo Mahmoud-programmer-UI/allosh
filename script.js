@@ -14,7 +14,11 @@ let deletePartOfInput = document.querySelector(".delete-part-of-input")
 let buttonsNumbers = document.querySelectorAll(".numbers-field button") 
 let closeAlert = document.querySelector(".close-alert")
 let bodyAlert = document.querySelector(".alert")
-
+let totals=document.querySelector(".total span")
+console.log((parseFloat(totals.innerHTML)+10)+"egp")
+function handleTotal(){
+    
+}
 
 function scannerWork(){
 // Global instance tracker
@@ -178,7 +182,7 @@ addItem.onclick = () => {
         let tr = document.getElementById(targetProduct["Item number"].trim())
         if (tr) {
             let tdQuantity = tr.querySelector(".quantity")
-            tdQuantity.innerHTML = parseInt(tdQuantity.innerHTML) + 1
+            tdQuantity.innerHTML = parseFloat(tdQuantity.innerHTML) + 1
         }
     } else {
         let tr = document.createElement("tr");
@@ -186,26 +190,73 @@ addItem.onclick = () => {
         let tdPrice = document.createElement("td");
         let tdCode = document.createElement("td");
         let tdQuantity = document.createElement("td");
-        
+        let tdDeleteRaw = document.createElement("td");
+        let btnDeleteRaw = document.createElement("button");
+        let tdQuantityValue = document.createElement("p");
+        let btnQuantityInc = document.createElement("button");
+        let btnQuantityDec = document.createElement("button");
+        tdDeleteRaw.appendChild(btnDeleteRaw)        
+        btnDeleteRaw.innerHTML="Delete"
+        btnDeleteRaw.style.cssText="background-color: rgb(221, 15, 15);border: 1px solid black;width: 50px;height: 35px;display: flex;justify-content: center;align-items: center;border-radius: 7px;"
+        btnDeleteRaw.onclick=()=>{
+            let index=itemAlreadeyAdded.indexOf(targetProduct["Product name"])
+            itemAlreadeyAdded.splice(index,1)
+            document.querySelector("tbody").removeChild(tr)
+        }
         tdName.innerHTML = targetProduct["Product name"];
         tdPrice.innerHTML = targetProduct.Price + " EGP";
-        tdCode.innerHTML = targetProduct["Item number"];
-        tdQuantity.innerHTML = counter;
-        tdQuantity.classList.add("quantity")
+        tdPrice.classList.add("price")
+        if(totals.innerHTML=="0"){
+            totals.innerHTML =targetProduct.Price
+            totals.innerHTML=parseFloat(totals.innerHTML).toFixed(2)
+
+        }else{
+            console.log(parseFloat(totals.innerHTML))
+            console.log(targetProduct.Price)
+            totals.innerHTML =`${parseFloat(totals.innerHTML)+parseFloat(targetProduct.Price)}`
+            totals.innerHTML=parseFloat(totals.innerHTML).toFixed(2)
         
+        }
+        tdCode.innerHTML = targetProduct["Item number"];
+        tdQuantityValue.innerHTML = counter;
+        tdQuantityValue.classList.add("quantity")
+        // tdQuantity.style.cssText="display:grid;grid-template-columns: repeat(3,1fr);"
+        btnQuantityDec.innerHTML="-"
+        btnQuantityInc.innerHTML="+"
         // تعيين الـ id للسطر برقم المنتج
         tr.id = targetProduct["Item number"].trim();
-        
+        btnQuantityDec.onclick=()=>{
+            if(tdQuantityValue.innerHTML==1){
+                alert("it can`t be in negative")
+                console.log(tdQuantityValue.innerHTML)
+            }else{
+                let fatherOfelement=tdQuantity.parentElement
+                totals.innerHTML=parseFloat(totals.innerHTML)-parseFloat(fatherOfelement.querySelector(".price").innerHTML)
+                totals.innerHTML=parseFloat(totals.innerHTML).toFixed(2)
+                
+                console.log(typeof parseFloat(totals.innerHTML))
+                console.log(typeof parseFloat(fatherOfelement.querySelector(".price").innerHTML))
+                tdQuantityValue.innerHTML=parseFloat(tdQuantityValue.innerHTML)- 1
+            }
+        }
+        btnQuantityInc.onclick=()=>{
+                let fatherOfelement=tdQuantity.parentElement
+                totals.innerHTML=parseFloat(totals.innerHTML)+parseFloat(fatherOfelement.querySelector(".price").innerHTML)
+                totals.innerHTML=parseFloat(totals.innerHTML).toFixed(2)
+                tdQuantityValue.innerHTML=parseFloat(tdQuantityValue.innerHTML) + 1
+        }
         itemAlreadeyAdded.push(tdName.innerHTML)
-        
+        tdQuantity.appendChild(btnQuantityDec)
+        tdQuantity.appendChild(tdQuantityValue)
+        tdQuantity.appendChild(btnQuantityInc)
         tr.appendChild(tdName)
         tr.appendChild(tdPrice)
         tr.appendChild(tdQuantity)
         tr.appendChild(tdCode)
+        tr.appendChild(tdDeleteRaw)
         
         document.querySelector("tbody").appendChild(tr)
     }
-    input.value = ""; // تصفير الإدخال بعد الإضافة
 }
 
 function returnBack() {
