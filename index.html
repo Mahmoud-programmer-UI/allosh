@@ -62,9 +62,9 @@
                 <p class="product-code">product code:</p>
             </div>                                      
         </div>
-        <button class="add-item" style="position: absolute;">add Item</button>
+        <button type="button" class="add-item" style="position: absolute;">add Item</button>
     </section>
-    <section class="table-section hide" >
+    <section class="table-section " >
         <table style="width: 95%; ">
             <thead>
             <th>item name</th>
@@ -76,7 +76,10 @@
 
             </tbody>
         </table>
-        <button class="return-to-price-check" onclick="returnBack()">return to price check</button>
+        <footer class="table-footer">
+            <button class="return-to-price-check" onclick="returnBack()">return to price check</button>
+            <p class="total" style="display: flex; align-items: center;">Totals:<span>0</span>EGP</p>
+        </footer>
     </section>
     <script src="data-script.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
