@@ -15,10 +15,7 @@ let buttonsNumbers = document.querySelectorAll(".numbers-field button")
 let closeAlert = document.querySelector(".close-alert")
 let bodyAlert = document.querySelector(".alert")
 let totals=document.querySelector(".total span")
-console.log((parseFloat(totals.innerHTML)+10)+"egp")
-function handleTotal(){
-    
-}
+let inpModifyQuan=document.querySelector(".modify-quantity")
 
 function scannerWork(){
 // Global instance tracker
@@ -195,7 +192,15 @@ addItem.onclick = () => {
         let tdQuantityValue = document.createElement("p");
         let btnQuantityInc = document.createElement("button");
         let btnQuantityDec = document.createElement("button");
+        let btnSetQuantity = document.createElement("button");
         tdDeleteRaw.appendChild(btnDeleteRaw)        
+        btnSetQuantity.innerHTML="Set Quantity"
+        btnSetQuantity.onclick=()=>{
+            tdQuantityValue.innerHTML=inpModifyQuan.value
+            totals.innerHTML=parseFloat(totals.innerHTML)+(parseFloat(tdPrice.innerHTML)*parseInt(inpModifyQuan.value)) -parseFloat(tdPrice.innerHTML)
+            totals.innerHTML=parseFloat( totals.innerHTML).toFixed(2)
+            inpModifyQuan.value=""
+        }
         btnDeleteRaw.innerHTML="Delete"
         btnDeleteRaw.style.cssText="background-color: rgb(221, 15, 15);border: 1px solid black;width: 50px;height: 35px;display: flex;justify-content: center;align-items: center;border-radius: 7px;"
         btnDeleteRaw.onclick=()=>{
@@ -235,7 +240,7 @@ addItem.onclick = () => {
                 let fatherOfelement=tdQuantity.parentElement
                 totals.innerHTML=parseFloat(totals.innerHTML)-parseFloat(fatherOfelement.querySelector(".price").innerHTML)
                 totals.innerHTML=parseFloat(totals.innerHTML).toFixed(2)
-                
+
                 console.log(typeof parseFloat(totals.innerHTML))
                 console.log(typeof parseFloat(fatherOfelement.querySelector(".price").innerHTML))
                 tdQuantityValue.innerHTML=parseFloat(tdQuantityValue.innerHTML)- 1
@@ -251,6 +256,7 @@ addItem.onclick = () => {
         tdQuantity.appendChild(btnQuantityDec)
         tdQuantity.appendChild(tdQuantityValue)
         tdQuantity.appendChild(btnQuantityInc)
+        tdQuantity.appendChild(btnSetQuantity)
         tr.appendChild(tdName)
         tr.appendChild(tdPrice)
         tr.appendChild(tdQuantity)
