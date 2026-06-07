@@ -201,6 +201,8 @@ addItem.onclick = () => {
         btnDeleteRaw.onclick=()=>{
             let index=itemAlreadeyAdded.indexOf(targetProduct["Product name"])
             itemAlreadeyAdded.splice(index,1)
+            totals.innerHTML=parseFloat(totals.innerHTML)- parseFloat(tdQuantityValue.innerHTML)*parseFloat(tdPrice.innerHTML)
+            totals.innerHTML=parseFloat(totals.innerHTML).toFixed(2)
             document.querySelector("tbody").removeChild(tr)
         }
         tdName.innerHTML = targetProduct["Product name"];
