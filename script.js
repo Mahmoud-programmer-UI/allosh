@@ -1,7 +1,7 @@
 let input = document.querySelector("input")
 let itemAlreadeyAdded = []
 let counter = 1;
-
+let previousValue=0;
 let productNameHtml = document.querySelector(".product-name")
 let productPriceHtml = document.querySelector(".product-price")
 let productCodeHtml = document.querySelector(".product-code")
@@ -196,7 +196,17 @@ addItem.onclick = () => {
         tdDeleteRaw.appendChild(btnDeleteRaw)        
         btnSetQuantity.innerHTML="Set Quantity"
         btnSetQuantity.onclick=()=>{
+            if(tdQuantityValue.dataset.situation=="true"){
+                tdQuantityValue.innerHTML=inpModifyQuan.value
+                console.log(tdQuantityValue.innerHTML)
+                console.log(inpModifyQuan.value)
+                totals.innerHTML=parseFloat(totals.innerHTML)-(parseFloat(tdPrice.innerHTML)*parseInt(previousValue))+parseFloat(tdPrice.innerHTML)
+                totals.innerHTML=parseFloat( totals.innerHTML).toFixed(2)                
+            }
+            
+            tdQuantityValue.dataset.situation="true"
             tdQuantityValue.innerHTML=inpModifyQuan.value
+            previousValue=inpModifyQuan.value
             totals.innerHTML=parseFloat(totals.innerHTML)+(parseFloat(tdPrice.innerHTML)*parseInt(inpModifyQuan.value)) -parseFloat(tdPrice.innerHTML)
             totals.innerHTML=parseFloat( totals.innerHTML).toFixed(2)
             inpModifyQuan.value=""
