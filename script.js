@@ -18,109 +18,144 @@ let totals=document.querySelector(".total span")
 let inpModifyQuan=document.querySelector(".modify-quantity")
 
 function scannerWork(){
-// Global instance tracker
+// ============================================================================
+// 1. GLOBAL SYSTEM CORE CONFIGURATION STACK
+// ============================================================================
 let html5QrcodeInstance = null;
+let isEngineTransitioning = false; // Guard flag to prevent multi-click crashes
 
-// Safe stop function
 function stopScanner() {
     if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
         html5QrcodeInstance.stop().then(() => {
-            console.log("Camera successfully stopped.");
-            document.getElementById('scanner-wrapper').style.display = 'none';
-        }).catch(err => console.error("Error stopping camera: ", err));
+            console.log("Scanner engine paused cleanly.");
+        }).catch(err => console.error("Error shutting down camera: ", err));
     }
 }
 
-// Main Scanner Logic
+// ============================================================================
+// 2. HARDWARE CORE INITIALIZATION LOGIC PIPELINE
+// ============================================================================
 function startBarcodeScanner() {
-    // 1. CONNECTION VERIFICATION CHECK
-    // If the library script link above failed, this safe-check catches it instantly
-    if (typeof Html5Qrcode === "undefined") {
-        console.error("Connection Error: The Html5Qrcode library is not ready yet!");
-        alert("Scanner library connection failed. Please refresh the page or check your internet connection.");
-        return;
-    }
+    if (typeof Html5Qrcode === "undefined") return;
 
-    console.log("Connection Verified! Securely linking custom script to the library.");
-
+    const productInput = document.getElementById('product-code-input');
     const scanBtn = document.getElementById('scan-btn');
-    const scannerWrapper = document.getElementById('scanner-wrapper');
+    const scannerView = document.getElementById('scanner-view');
 
-    if (!scanBtn) return;
+    // Create a single instance mapped directly inside our viewport container
+    html5QrcodeInstance = new Html5Qrcode("scanner-view");
 
-    scanBtn.addEventListener('click', () => {
-        // Prevent launching duplicate background camera loops
-        if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
-            console.warn("Scanner is already actively running.");
+    const config = { 
+        fps: 30, // 30 FPS for fast pixel scanning
+        qrbox: (viewWidth, viewHeight) => {
+            return { 
+                width: Math.floor(viewWidth * 0.85), 
+                height: 120 
+            };
+        },
+        aspectRatio: 1.333333, // Standard 4:3 format to avoid code stretching
+        formatsToSupport: [ 
+            Html5QrcodeSupportedFormats.EAN_13, 
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.EAN_8
+        ]
+    };
+
+    const runCamera = (mode) => {
+        // Blocker guard: Stop execution if camera is already changing power states
+        if (isEngineTransitioning || (html5QrcodeInstance && html5QrcodeInstance.isScanning)) {
             return;
         }
 
-        // Show your layout container framework dynamically
-        if (scannerWrapper) scannerWrapper.style.display = 'block';
+        isEngineTransitioning = true;
 
-        // Connect the instance directly to your HTML target view element ID
-        html5QrcodeInstance = new Html5Qrcode("scanner-view");
+        if (scannerView) {
+            scannerView.style.setProperty("display", "block", "important");
+            scannerView.style.width = "100%";
+            scannerView.style.height = "100%";
+        }
 
-        // Optimized rectangular configuration for retail codes
-        const config = { 
-            fps: 20, 
-            qrbox: { width: 300, height: 140 },
-            formatsToSupport: [ 
-                Html5QrcodeSupportedFormats.EAN_13, 
-                Html5QrcodeSupportedFormats.UPC_A,
-                Html5QrcodeSupportedFormats.CODE_128
+        const videoConstraints = {
+            facingMode: mode,
+            advanced: [
+                { focusMode: "continuous" },
+                { exposureMode: "continuous" }
             ]
         };
 
-        // Fire the live streaming video feed
         html5QrcodeInstance.start(
-            { facingMode: "environment" }, // Request mobile rear camera lens array
+            videoConstraints, 
             config,
             (decodedText) => {
-                // Success: Code recognized inside the container frame!
-                console.log("Scanned Item Code: ", decodedText);
-                
-                const inputField = document.querySelector('input[placeholder="write product code"]');
-                if (inputField) {
-                    inputField.value = decodedText;
-                    // Trigger events so Allosh price data updates instantly
-                    inputField.dispatchEvent(new Event('input', { bubbles: true }));
-                    inputField.dispatchEvent(new Event('change', { bubbles: true }));
+                console.log("Barcode Recognized: ", decodedText);
+                if (productInput) {
+                    productInput.value = decodedText;
+                    productInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    productInput.dispatchEvent(new Event('change', { bubbles: true }));
                 }
-                stopScanner();
             },
-            (errorMessage) => { /* Scanning continuous image frames... */ }
-        ).catch(err => {
-            console.warn("Rear camera failed, trying front/default webcam fallback...", err);
-            
-            // Safe fallback attempt for laptop browser testing environments
-            html5QrcodeInstance.start(
-                { facingMode: "user" }, 
-                config,
-                (decodedText) => {
-                    const inputField = document.querySelector('input[placeholder="write product code"]');
-                    if (inputField) {
-                        inputField.value = decodedText;
-                        inputField.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                    stopScanner();
-                },
-                (err2) => {}
-            ).catch(finalErr => {
-                console.error("Camera connection completely blocked: ", finalErr);
-            });
+            (err) => {
+                if (scannerView && scannerView.style.display === "none") {
+                    scannerView.style.setProperty("display", "block", "important");
+                }
+            }
+        ).then(() => {
+            isEngineTransitioning = false; // State transition completed successfully
+        }).catch(err => {
+            isEngineTransitioning = false; // Reset guard on error
+            if (mode === "environment") {
+                runCamera("user"); // Fallback to front camera if back lens is busy
+            } else {
+                console.warn("Camera stream blocked or unavailable.", err);
+            }
         });
-    });
+    };
 
-    // Attach stop handler to cancel button safely
-    const cancelBtn = document.getElementById('cancel-btn');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', stopScanner);
+    // Auto-boot camera immediately on page load
+    runCamera("environment");
+
+    // "Scan" button safely hooks into the camera state without re-triggering it if active
+    if (scanBtn) {
+        scanBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!html5QrcodeInstance.isScanning && !isEngineTransitioning) {
+                runCamera("environment");
+            } else {
+                console.log("Scanner is already running actively. Request ignored safely.");
+            }
+        });
     }
 }
 
-// Run the script securely after the browser DOM structure renders completely
+// ============================================================================
+// 3. HARDWARE INTEGRATED APP KEYPAD LAYER CAPTURE
+// ============================================================================
+function initializeKeypadMechanics() {
+    const inputField = document.getElementById('product-code-input');
+    if (!inputField) return;
+
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target.tagName !== 'BUTTON' || target.id === 'scan-btn') return;
+
+        const buttonText = target.innerText.trim();
+
+        if (buttonText === 'Clear' || buttonText === 'C') {
+            inputField.value = '';
+            inputField.dispatchEvent(new Event('input', { bubbles: true }));
+        } else if (buttonText === 'Delete' || buttonText === 'X') {
+            inputField.value = inputField.value.slice(0, -1);
+            inputField.dispatchEvent(new Event('input', { bubbles: true }));
+        } else if (!isNaN(buttonText) && buttonText !== '') {
+            inputField.value += buttonText;
+            inputField.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    initializeKeypadMechanics();
     startBarcodeScanner();
 });
 }
@@ -180,6 +215,7 @@ addItem.onclick = () => {
         if (tr) {
             let tdQuantity = tr.querySelector(".quantity")
             tdQuantity.innerHTML = parseFloat(tdQuantity.innerHTML) + 1
+            totals.innerHTML=parseFloat(totals.innerHTML)+parseFloat(targetProduct.Price) 
         }
     } else {
         let tr = document.createElement("tr");
@@ -197,14 +233,18 @@ addItem.onclick = () => {
         btnSetQuantity.innerHTML="Set Quantity"
         btnSetQuantity.onclick=()=>{
             if(tdQuantityValue.dataset.situation=="true"){
+                if(typeof parseInt( inpModifyQuan.value)=="number"){
+                    console.log(inpModifyQuan)
+                }
                 tdQuantityValue.innerHTML=inpModifyQuan.value
                 console.log(tdQuantityValue.innerHTML)
                 console.log(inpModifyQuan.value)
                 totals.innerHTML=parseFloat(totals.innerHTML)-(parseFloat(tdPrice.innerHTML)*parseInt(previousValue))+parseFloat(tdPrice.innerHTML)
                 totals.innerHTML=parseFloat( totals.innerHTML).toFixed(2)                
             }
-            
+
             tdQuantityValue.dataset.situation="true"
+            // we will add the same condition here
             tdQuantityValue.innerHTML=inpModifyQuan.value
             previousValue=inpModifyQuan.value
             totals.innerHTML=parseFloat(totals.innerHTML)+(parseFloat(tdPrice.innerHTML)*parseInt(inpModifyQuan.value)) -parseFloat(tdPrice.innerHTML)
@@ -243,6 +283,7 @@ addItem.onclick = () => {
         // تعيين الـ id للسطر برقم المنتج
         tr.id = targetProduct["Item number"].trim();
         btnQuantityDec.onclick=()=>{
+
             if(tdQuantityValue.innerHTML==1){
                 alert("it can`t be in negative")
                 console.log(tdQuantityValue.innerHTML)
