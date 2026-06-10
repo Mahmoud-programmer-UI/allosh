@@ -18,7 +18,6 @@ let totals=document.querySelector(".total span")
 let inpModifyQuan=document.querySelector(".modify-quantity")
 
 function scannerWork(){
-// Global instance tracker
 let html5QrcodeInstance = null;
 
 // Safe stop function
@@ -62,27 +61,25 @@ function startBarcodeScanner() {
 
         // Optimized rectangular configuration for retail codes
         const config = { 
-            fps: 24, // Bumped slightly to 24 for smoother, cleaner processing frame rates
+            fps: 20, 
             qrbox: { width: 300, height: 140 },
-            // Keeping all standard options here to guarantee library startup stability
             formatsToSupport: [ 
                 Html5QrcodeSupportedFormats.EAN_13, 
                 Html5QrcodeSupportedFormats.UPC_A,
                 Html5QrcodeSupportedFormats.CODE_128,
-                Html5QrcodeSupportedFormats.EAN_8,
-                Html5QrcodeSupportedFormats.QR_CODE // Loaded strictly to catch and discard it
+                Html5QrcodeSupportedFormats.QR_CODE // Loaded strictly so we can intercept and block it
             ]
         };
 
-        // 🎯 OPTIMIZATION 1: CRISP CAMERA QUALITY RESOLUTION
-        // Instead of plain strings, we pass high-definition target dimensions to the lens
-        const backCameraConstraints = {
+        // 🎯 FIX: Valid structure according to html5-qrcode specifications.
+        // We use 'ideal' settings so the browser requests high-definition video lines automatically.
+        const videoConstraints = {
             facingMode: "environment",
             width: { ideal: 1280 },
             height: { ideal: 720 }
         };
 
-        const frontCameraConstraints = {
+        const fallbackConstraints = {
             facingMode: "user",
             width: { ideal: 1280 },
             height: { ideal: 720 }
@@ -90,20 +87,20 @@ function startBarcodeScanner() {
 
         // Fire the live streaming video feed
         html5QrcodeInstance.start(
-            backCameraConstraints, 
+            videoConstraints, // Pass the clean media tracking block safely
             config,
             (decodedText, decodedResult) => {
                 
-                // 🎯 OPTIMIZATION 2: STRICT QR CODE FILTER (LIKE GOOGLE LENS)
+                // 🎯 GOOGLE LENS FILTER: Instantly drop QR scans
                 if (decodedResult && decodedResult.result && decodedResult.result.format) {
                     const formatName = decodedResult.result.format.formatName;
                     if (formatName === "QR_CODE") {
-                        console.log("QR Code detected. Ignored like Google Lens.");
-                        return; // Exit out instantly! The camera stays active and skips the code.
+                        console.log("QR Code ignored like Google Lens.");
+                        return; // Exit here! The scanner remains open and ignores the QR.
                     }
                 }
 
-                // Success: Valid barcode line numbers recognized inside the container frame!
+                // Success: Code recognized inside the container frame!
                 console.log("Scanned Item Code: ", decodedText);
                 
                 const inputField = document.querySelector('input[placeholder="write product code"]');
@@ -119,15 +116,15 @@ function startBarcodeScanner() {
         ).catch(err => {
             console.warn("Rear camera failed, trying front/default webcam fallback...", err);
             
-            // Safe fallback attempt for laptop browser testing environments with HD quality configurations
+            // Safe fallback attempt for laptop browser testing environments
             html5QrcodeInstance.start(
-                frontCameraConstraints, 
+                fallbackConstraints, 
                 config,
                 (decodedText, decodedResult) => {
-                    // Apply QR filter on fallback camera stream as well
+                    // Filter QR codes on the fallback loop too
                     if (decodedResult && decodedResult.result && decodedResult.result.format) {
                         if (decodedResult.result.format.formatName === "QR_CODE") {
-                            return; 
+                            return;
                         }
                     }
 
@@ -157,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     startBarcodeScanner();
 });
 }
-scannerWork()
+scannerWork()   
 // تشغيل أزرار الأرقام
 buttonsNumbers.forEach((e) => {
     e.onclick = () => {
