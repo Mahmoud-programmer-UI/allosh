@@ -18,144 +18,109 @@ let totals=document.querySelector(".total span")
 let inpModifyQuan=document.querySelector(".modify-quantity")
 
 function scannerWork(){
-// ============================================================================
-// 1. GLOBAL SYSTEM CORE CONFIGURATION STACK
-// ============================================================================
+// Global instance tracker
 let html5QrcodeInstance = null;
-let isEngineTransitioning = false; // Guard flag to prevent multi-click crashes
 
+// Safe stop function
 function stopScanner() {
     if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
         html5QrcodeInstance.stop().then(() => {
-            console.log("Scanner engine paused cleanly.");
-        }).catch(err => console.error("Error shutting down camera: ", err));
+            console.log("Camera successfully stopped.");
+            document.getElementById('scanner-wrapper').style.display = 'none';
+        }).catch(err => console.error("Error stopping camera: ", err));
     }
 }
 
-// ============================================================================
-// 2. HARDWARE CORE INITIALIZATION LOGIC PIPELINE
-// ============================================================================
+// Main Scanner Logic
 function startBarcodeScanner() {
-    if (typeof Html5Qrcode === "undefined") return;
+    // 1. CONNECTION VERIFICATION CHECK
+    // If the library script link above failed, this safe-check catches it instantly
+    if (typeof Html5Qrcode === "undefined") {
+        console.error("Connection Error: The Html5Qrcode library is not ready yet!");
+        alert("Scanner library connection failed. Please refresh the page or check your internet connection.");
+        return;
+    }
 
-    const productInput = document.getElementById('product-code-input');
+    console.log("Connection Verified! Securely linking custom script to the library.");
+
     const scanBtn = document.getElementById('scan-btn');
-    const scannerView = document.getElementById('scanner-view');
+    const scannerWrapper = document.getElementById('scanner-wrapper');
 
-    // Create a single instance mapped directly inside our viewport container
-    html5QrcodeInstance = new Html5Qrcode("scanner-view");
+    if (!scanBtn) return;
 
-    const config = { 
-        fps: 30, // 30 FPS for fast pixel scanning
-        qrbox: (viewWidth, viewHeight) => {
-            return { 
-                width: Math.floor(viewWidth * 0.85), 
-                height: 120 
-            };
-        },
-        aspectRatio: 1.333333, // Standard 4:3 format to avoid code stretching
-        formatsToSupport: [ 
-            Html5QrcodeSupportedFormats.EAN_13, 
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.EAN_8
-        ]
-    };
-
-    const runCamera = (mode) => {
-        // Blocker guard: Stop execution if camera is already changing power states
-        if (isEngineTransitioning || (html5QrcodeInstance && html5QrcodeInstance.isScanning)) {
+    scanBtn.addEventListener('click', () => {
+        // Prevent launching duplicate background camera loops
+        if (html5QrcodeInstance && html5QrcodeInstance.isScanning) {
+            console.warn("Scanner is already actively running.");
             return;
         }
 
-        isEngineTransitioning = true;
+        // Show your layout container framework dynamically
+        if (scannerWrapper) scannerWrapper.style.display = 'block';
 
-        if (scannerView) {
-            scannerView.style.setProperty("display", "block", "important");
-            scannerView.style.width = "100%";
-            scannerView.style.height = "100%";
-        }
+        // Connect the instance directly to your HTML target view element ID
+        html5QrcodeInstance = new Html5Qrcode("scanner-view");
 
-        const videoConstraints = {
-            facingMode: mode,
-            advanced: [
-                { focusMode: "continuous" },
-                { exposureMode: "continuous" }
+        // Optimized rectangular configuration for retail codes
+        const config = { 
+            fps: 20, 
+            qrbox: { width: 300, height: 140 },
+            formatsToSupport: [ 
+                Html5QrcodeSupportedFormats.EAN_13, 
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.CODE_128
             ]
         };
 
+        // Fire the live streaming video feed
         html5QrcodeInstance.start(
-            videoConstraints, 
+            { facingMode: "environment" }, // Request mobile rear camera lens array
             config,
             (decodedText) => {
-                console.log("Barcode Recognized: ", decodedText);
-                if (productInput) {
-                    productInput.value = decodedText;
-                    productInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    productInput.dispatchEvent(new Event('change', { bubbles: true }));
+                // Success: Code recognized inside the container frame!
+                console.log("Scanned Item Code: ", decodedText);
+                
+                const inputField = document.querySelector('input[placeholder="write product code"]');
+                if (inputField) {
+                    inputField.value = decodedText;
+                    // Trigger events so Allosh price data updates instantly
+                    inputField.dispatchEvent(new Event('input', { bubbles: true }));
+                    inputField.dispatchEvent(new Event('change', { bubbles: true }));
                 }
+                stopScanner();
             },
-            (err) => {
-                if (scannerView && scannerView.style.display === "none") {
-                    scannerView.style.setProperty("display", "block", "important");
-                }
-            }
-        ).then(() => {
-            isEngineTransitioning = false; // State transition completed successfully
-        }).catch(err => {
-            isEngineTransitioning = false; // Reset guard on error
-            if (mode === "environment") {
-                runCamera("user"); // Fallback to front camera if back lens is busy
-            } else {
-                console.warn("Camera stream blocked or unavailable.", err);
-            }
+            (errorMessage) => { /* Scanning continuous image frames... */ }
+        ).catch(err => {
+            console.warn("Rear camera failed, trying front/default webcam fallback...", err);
+            
+            // Safe fallback attempt for laptop browser testing environments
+            html5QrcodeInstance.start(
+                { facingMode: "user" }, 
+                config,
+                (decodedText) => {
+                    const inputField = document.querySelector('input[placeholder="write product code"]');
+                    if (inputField) {
+                        inputField.value = decodedText;
+                        inputField.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    stopScanner();
+                },
+                (err2) => {}
+            ).catch(finalErr => {
+                console.error("Camera connection completely blocked: ", finalErr);
+            });
         });
-    };
+    });
 
-    // Auto-boot camera immediately on page load
-    runCamera("environment");
-
-    // "Scan" button safely hooks into the camera state without re-triggering it if active
-    if (scanBtn) {
-        scanBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!html5QrcodeInstance.isScanning && !isEngineTransitioning) {
-                runCamera("environment");
-            } else {
-                console.log("Scanner is already running actively. Request ignored safely.");
-            }
-        });
+    // Attach stop handler to cancel button safely
+    const cancelBtn = document.getElementById('cancel-btn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', stopScanner);
     }
 }
 
-// ============================================================================
-// 3. HARDWARE INTEGRATED APP KEYPAD LAYER CAPTURE
-// ============================================================================
-function initializeKeypadMechanics() {
-    const inputField = document.getElementById('product-code-input');
-    if (!inputField) return;
-
-    document.addEventListener('click', (event) => {
-        const target = event.target;
-        if (target.tagName !== 'BUTTON' || target.id === 'scan-btn') return;
-
-        const buttonText = target.innerText.trim();
-
-        if (buttonText === 'Clear' || buttonText === 'C') {
-            inputField.value = '';
-            inputField.dispatchEvent(new Event('input', { bubbles: true }));
-        } else if (buttonText === 'Delete' || buttonText === 'X') {
-            inputField.value = inputField.value.slice(0, -1);
-            inputField.dispatchEvent(new Event('input', { bubbles: true }));
-        } else if (!isNaN(buttonText) && buttonText !== '') {
-            inputField.value += buttonText;
-            inputField.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    });
-}
-
+// Run the script securely after the browser DOM structure renders completely
 document.addEventListener("DOMContentLoaded", () => {
-    initializeKeypadMechanics();
     startBarcodeScanner();
 });
 }
