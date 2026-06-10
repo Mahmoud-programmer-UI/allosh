@@ -18,6 +18,7 @@ let totals=document.querySelector(".total span")
 let inpModifyQuan=document.querySelector(".modify-quantity")
 
 function scannerWork(){
+// Global instance tracker
 let html5QrcodeInstance = null;
 
 // Safe stop function
@@ -33,6 +34,7 @@ function stopScanner() {
 // Main Scanner Logic
 function startBarcodeScanner() {
     // 1. CONNECTION VERIFICATION CHECK
+    // If the library script link above failed, this safe-check catches it instantly
     if (typeof Html5Qrcode === "undefined") {
         console.error("Connection Error: The Html5Qrcode library is not ready yet!");
         alert("Scanner library connection failed. Please refresh the page or check your internet connection.");
@@ -66,40 +68,15 @@ function startBarcodeScanner() {
             formatsToSupport: [ 
                 Html5QrcodeSupportedFormats.EAN_13, 
                 Html5QrcodeSupportedFormats.UPC_A,
-                Html5QrcodeSupportedFormats.CODE_128,
-                Html5QrcodeSupportedFormats.QR_CODE // Loaded strictly so we can intercept and block it
+                Html5QrcodeSupportedFormats.CODE_128
             ]
-        };
-
-        // 🎯 FIX: Valid structure according to html5-qrcode specifications.
-        // We use 'ideal' settings so the browser requests high-definition video lines automatically.
-        const videoConstraints = {
-            facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-        };
-
-        const fallbackConstraints = {
-            facingMode: "user",
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
         };
 
         // Fire the live streaming video feed
         html5QrcodeInstance.start(
-            videoConstraints, // Pass the clean media tracking block safely
+            { facingMode: "environment" }, // Request mobile rear camera lens array
             config,
-            (decodedText, decodedResult) => {
-                
-                // 🎯 GOOGLE LENS FILTER: Instantly drop QR scans
-                if (decodedResult && decodedResult.result && decodedResult.result.format) {
-                    const formatName = decodedResult.result.format.formatName;
-                    if (formatName === "QR_CODE") {
-                        console.log("QR Code ignored like Google Lens.");
-                        return; // Exit here! The scanner remains open and ignores the QR.
-                    }
-                }
-
+            (decodedText) => {
                 // Success: Code recognized inside the container frame!
                 console.log("Scanned Item Code: ", decodedText);
                 
@@ -118,16 +95,9 @@ function startBarcodeScanner() {
             
             // Safe fallback attempt for laptop browser testing environments
             html5QrcodeInstance.start(
-                fallbackConstraints, 
+                { facingMode: "user" }, 
                 config,
-                (decodedText, decodedResult) => {
-                    // Filter QR codes on the fallback loop too
-                    if (decodedResult && decodedResult.result && decodedResult.result.format) {
-                        if (decodedResult.result.format.formatName === "QR_CODE") {
-                            return;
-                        }
-                    }
-
+                (decodedText) => {
                     const inputField = document.querySelector('input[placeholder="write product code"]');
                     if (inputField) {
                         inputField.value = decodedText;
@@ -154,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     startBarcodeScanner();
 });
 }
-scannerWork()   
+scannerWork()
 // تشغيل أزرار الأرقام
 buttonsNumbers.forEach((e) => {
     e.onclick = () => {
