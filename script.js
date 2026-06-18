@@ -62,21 +62,47 @@ function startBarcodeScanner() {
         html5QrcodeInstance = new Html5Qrcode("scanner-view");
 
         // Optimized rectangular configuration for retail codes
+        // 🎯 OPTIMIZATION: Added videoConstraints configuration directly into the object mapping.
+        // Loaded QR_CODE into format array strictly to recognize it and catch it in the callback filter.
+        
+        /////
+            console.log("optimize")
+        //    line important need some optimization
+        /////
         const config = { 
             fps: 20, 
-            qrbox: { width: 300, height: 140 },
+            qrbox: { width: 1280, height: 720 },
             formatsToSupport: [ 
                 Html5QrcodeSupportedFormats.EAN_13, 
                 Html5QrcodeSupportedFormats.UPC_A,
-                Html5QrcodeSupportedFormats.CODE_128
-            ]
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.QR_CODE
+            ],
+            videoConstraints: {
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
         };
-
+        //////
+        console.log("end optimize")
+        ///////
         // Fire the live streaming video feed
         html5QrcodeInstance.start(
-            { facingMode: "environment" }, // Request mobile rear camera lens array
+            { facingMode: "environment" }, // Keeps your stable single-key parameter object safe
             config,
-            (decodedText) => {
+            (decodedText, decodedResult) => {
+                
+                // 🎯 OPTIMIZATION: GOOGLE LENS EXCLUSIVE FILTER
+                // If it evaluates a QR code, it instantly drops out of the function without populating your field
+                if (decodedResult && decodedResult.result && decodedResult.result.format) {
+                    const formatName = decodedResult.result.format.formatName;
+                    if (formatName === "QR_CODE") {
+                        console.log("QR code frame dropped and ignored successfully.");
+                        return; 
+                    }
+                }
+
                 // Success: Code recognized inside the container frame!
                 console.log("Scanned Item Code: ", decodedText);
                 
@@ -93,11 +119,21 @@ function startBarcodeScanner() {
         ).catch(err => {
             console.warn("Rear camera failed, trying front/default webcam fallback...", err);
             
+            // Apply camera configurations to user-facing lens environment fallback seamlessly
+            config.videoConstraints.facingMode = "user";
+
             // Safe fallback attempt for laptop browser testing environments
             html5QrcodeInstance.start(
                 { facingMode: "user" }, 
                 config,
-                (decodedText) => {
+                (decodedText, decodedResult) => {
+                    // Check and filter QR codes on front/laptop test camera loops too
+                    if (decodedResult && decodedResult.result && decodedResult.result.format) {
+                        if (decodedResult.result.format.formatName === "QR_CODE") {
+                            return;
+                        }
+                    }
+
                     const inputField = document.querySelector('input[placeholder="write product code"]');
                     if (inputField) {
                         inputField.value = decodedText;
@@ -180,7 +216,7 @@ addItem.onclick = () => {
         if (tr) {
             let tdQuantity = tr.querySelector(".quantity")
             tdQuantity.innerHTML = parseFloat(tdQuantity.innerHTML) + 1
-            totals.innerHTML=parseFloat(totals.innerHTML)+parseFloat(targetProduct.Price) 
+            totals.innerHTML=parseFloat(totals.innerHTML)+(parseFloat(targetProduct.Price)*parseFloat(tdQuantity.innerHTML)) 
         }
     } else {
         let tr = document.createElement("tr");
@@ -204,7 +240,7 @@ addItem.onclick = () => {
                 tdQuantityValue.innerHTML=inpModifyQuan.value
                 console.log(tdQuantityValue.innerHTML)
                 console.log(inpModifyQuan.value)
-                totals.innerHTML=parseFloat(totals.innerHTML)-(parseFloat(tdPrice.innerHTML)*parseInt(previousValue))+parseFloat(tdPrice.innerHTML)
+                totals.innerHTML=parseFloat(totals.innerHTML)-(parseFloat(tdPrice.innerHTML)*parseInt(previousValue))+(parseFloat(tdPrice.innerHTML)*parseFloat(tdQuantity.innerHTML))
                 totals.innerHTML=parseFloat( totals.innerHTML).toFixed(2)                
             }
 
