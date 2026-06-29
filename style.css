@@ -144,3 +144,67 @@ button{
         font-size: x-large !important;
     }
 }
+
+/* animation part */
+
+.spans span{ 
+    width: 35px;
+    height: 35px;
+    border-radius: 100%;
+    position: relative;
+
+}
+.first{
+    animation: move 2s ease-in-out 1.3s infinite;
+    }
+.second{
+    animation: move 2s ease-in-out 1.5s infinite;
+}
+.third{
+    animation: move 2s ease-in-out 1.7s infinite;
+}
+.spans span::before{ 
+    content: "";
+    position: absolute;
+    top: 9%;
+    width: 85%;
+    height: 85%;
+    background-color: rgb(20, 16, 234);
+    border-radius: 100%;
+    left: 9%;
+
+
+}
+.my-loading{
+    animation: return 1.2s ease-in-out 0s 1;
+}
+.hide{
+    display: none !important;
+}
+.show{
+    display: block !important;
+}
+@keyframes return {
+    0%{
+        transform: translateX(-100%);
+    }   
+
+    100%{
+        transform: translateX(0%);
+    }
+}
+
+@keyframes move {
+    0%{
+        transform: translateY(0px);
+    }   
+
+    50%{
+        transform: translateY(-45px);
+
+    }
+
+    100%{
+        transform: translateY(0px);
+    }
+}
