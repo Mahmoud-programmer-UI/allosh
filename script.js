@@ -16,6 +16,23 @@ let closeAlert = document.querySelector(".close-alert")
 let bodyAlert = document.querySelector(".alert")
 let totals=document.querySelector(".total span")
 let inpModifyQuan=document.querySelector(".modify-quantity")
+let heroSection=document.querySelector(".body")
+console.log(heroSection)
+function animationPart(){
+    let myLoading=document.querySelector(".my-loading")
+    let statement=false;
+    setTimeout(()=>{
+        myLoading.classList.add("hide")
+        console.log(myLoading)
+        hero()
+    },5000)
+    function hero(){
+        console.log(heroSection)
+        heroSection.classList.replace("hide","show")
+        console.log(heroSection)
+    }
+}
+animationPart()
 
 function scannerWork(){
 // Global instance tracker
@@ -64,11 +81,6 @@ function startBarcodeScanner() {
         // Optimized rectangular configuration for retail codes
         // 🎯 OPTIMIZATION: Added videoConstraints configuration directly into the object mapping.
         // Loaded QR_CODE into format array strictly to recognize it and catch it in the callback filter.
-        
-        /////
-            console.log("optimize")
-        //    line important need some optimization
-        /////
         const config = { 
             fps: 20, 
             qrbox: { width: 1280, height: 720 },
@@ -84,9 +96,7 @@ function startBarcodeScanner() {
                 height: { ideal: 720 }
             }
         };
-        //////
-        console.log("end optimize")
-        ///////
+
         // Fire the live streaming video feed
         html5QrcodeInstance.start(
             { facingMode: "environment" }, // Keeps your stable single-key parameter object safe
@@ -162,39 +172,46 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 scannerWork()
 // تشغيل أزرار الأرقام
-buttonsNumbers.forEach((e) => {
-    e.onclick = () => {
-        input.value = input.value + e.innerHTML.trim()
+function numbersButtonsWork(){
+    buttonsNumbers.forEach((e) => {
+        e.onclick = () => {
+            input.value = input.value + e.innerHTML.trim()
+        }
+    })
+
+    clearInputBtn.onclick = () => {
+        input.value = ""
     }
-})
 
-clearInputBtn.onclick = () => {
-    input.value = ""
-}
+    closeAlert.onclick = () => {
+        bodyAlert.classList.replace("show-flex", "hide")
+    }
 
-closeAlert.onclick = () => {
-    bodyAlert.classList.replace("show-flex", "hide")
-}
-
-deletePartOfInput.onclick = () => {
-    let inputArr = [...input.value]
-    inputArr.pop()
-    input.value = inputArr.join("")
+    deletePartOfInput.onclick = () => {
+        let inputArr = [...input.value]
+        inputArr.pop()
+        input.value = inputArr.join("")
+    }
 }
 
 // زر الـ Check Product
 addProduct.onclick = () => {
     // تصليح المقارنة (String ضد String)
     let targetProduct = cleanData.find((e) => e["Item number"].trim() === input.value.trim())
+        if (!targetProduct) {
+                bodyAlert.classList.replace("hide", "show-flex")
+                return; // أوقف الوظيفة فوراً لو المنتج مش موجود عشان الكود ميضربش
+        }else{
+            if(Object.hasOwn(targetProduct, 'blu')&&targetProduct.blu != 0){
+                workOnBlu()
+            }else{
+                productNameHtml.innerHTML = `product name: ${targetProduct["Product name"]}`
+                productPriceHtml.innerHTML = `product price: ${targetProduct.Price} EGP`
+                productCodeHtml.innerHTML = `product code: ${targetProduct["Item number"]}`
+            
+            }
+        }
     
-    if (!targetProduct) {
-        bodyAlert.classList.replace("hide", "show-flex")
-        return; // أوقف الوظيفة فوراً لو المنتج مش موجود عشان الكود ميضربش
-    }
-    
-    productNameHtml.innerHTML = `product name: ${targetProduct["Product name"]}`
-    productPriceHtml.innerHTML = `product price: ${targetProduct.Price} EGP`
-    productCodeHtml.innerHTML = `product code: ${targetProduct["Item number"]}`
 }
 
 // زر الـ Add Item للجدول
@@ -216,7 +233,7 @@ addItem.onclick = () => {
         if (tr) {
             let tdQuantity = tr.querySelector(".quantity")
             tdQuantity.innerHTML = parseFloat(tdQuantity.innerHTML) + 1
-            totals.innerHTML=parseFloat(totals.innerHTML)+(parseFloat(targetProduct.Price)*parseFloat(tdQuantity.innerHTML)) 
+            totals.innerHTML=parseFloat(totals.innerHTML)+parseFloat(targetProduct.Price) 
         }
     } else {
         let tr = document.createElement("tr");
@@ -240,7 +257,7 @@ addItem.onclick = () => {
                 tdQuantityValue.innerHTML=inpModifyQuan.value
                 console.log(tdQuantityValue.innerHTML)
                 console.log(inpModifyQuan.value)
-                totals.innerHTML=parseFloat(totals.innerHTML)-(parseFloat(tdPrice.innerHTML)*parseInt(previousValue))+(parseFloat(tdPrice.innerHTML)*parseFloat(tdQuantity.innerHTML))
+                totals.innerHTML=parseFloat(totals.innerHTML)-(parseFloat(tdPrice.innerHTML)*parseInt(previousValue))+parseFloat(tdPrice.innerHTML)
                 totals.innerHTML=parseFloat( totals.innerHTML).toFixed(2)                
             }
 
@@ -273,7 +290,6 @@ addItem.onclick = () => {
             console.log(targetProduct.Price)
             totals.innerHTML =`${parseFloat(totals.innerHTML)+parseFloat(targetProduct.Price)}`
             totals.innerHTML=parseFloat(totals.innerHTML).toFixed(2)
-        
         }
         tdCode.innerHTML = targetProduct["Item number"];
         tdQuantityValue.innerHTML = counter;
@@ -318,7 +334,45 @@ addItem.onclick = () => {
         document.querySelector("tbody").appendChild(tr)
     }
 }
+function workOnBlu(){
+    let blu=[]
+    let filtredBlu=[]
+    let joinedBlu;
+    let targetProduct=cleanData.find((e)=>e["Item number"]==input.value)
+        console.log(targetProduct)
+    if(input.value==targetProduct["Item number"]){
 
+        blu.push(...targetProduct["Item number"])
+        console.log(blu)
+
+        blu.splice(length-6,6)
+        console.log(blu)
+        for (let i = blu.length-1; i >= 1; i--) {
+            console.log("test")
+            if(blu[i]==0){
+                console.log("hello")
+                break;
+            }else{
+                filtredBlu.push(blu[i])
+            }   
+
+        }
+
+        joinedBlu=filtredBlu.reverse().join("")
+        console.log(filtredBlu.reverse())
+        console.log(joinedBlu)
+        if(joinedBlu==targetProduct.blu){
+            console.log(joinedBlu)
+
+            productNameHtml.innerHTML = `product name: ${targetProduct["Product name"]}`
+            productPriceHtml.innerHTML = `product price: ${targetProduct.Price} EGP`
+            productCodeHtml.innerHTML = `product code: ${targetProduct["Item number"]}`
+    
+        }else{
+
+        }
+    }
+}
 function returnBack() {
     priceCheckSection.classList.replace("hide", "show-flex")
     tableSection.classList.replace("show", "hide")
